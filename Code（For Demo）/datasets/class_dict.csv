@@ -1,0 +1,6 @@
+name,r,g,b
+cloud,255,255,255
+cloud shadow,0,0,0
+snow/ice,0,255,255
+water,0,0,255
+flooded,150,150,150
