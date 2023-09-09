@@ -28,43 +28,49 @@
 
 #### 3.3抽象化模块的具象化表述
 ![各层抽象化理解](pic2_%E5%90%84%E5%B1%82%E7%9A%84%E6%8A%BD%E8%B1%A1%E5%8C%96%E7%90%86%E8%A7%A3.jpg)
+
+
 (1)Transformer分支的表达式
-\[d_i=\left\{\begin{array}{l}x_0, i=0 \\ x_i^t+x_i^{m c}, i=1,3 \\ x_i^t, i=2,4\end{array}\right.\]
+
+$$d_i=\left\{\begin{array}{l}x_0, i=0 \\ x_i^t+x_i^{m c}, i=1,3 \\ x_i^t, i=2,4\end{array}\right.$$
+
 其中，${{d}_{i}}$表示Transformer分支第$i$层的输入矩阵($i=0,1,2,3,4$),${{x}_{0}}$表示输入到模型的矩阵，$x_{i}^{t}$和$x_{i+1}^{t}$分别表示Transformer分支的第$i$层和第$i+1$层的输出矩阵，$x_{i}^{mc}$表示卷积分支的第$i$层输出经过多级池化后的特征图。
-\[{{T}_{1}}=Con{{v}_{embed}}({{d}_{i}})\]
+
+$${{T}_{1}}=Con{{v}_{embed}}({{d}_{i}})$$,
 $Con{{v}_{embed}}(\centerdot )$表示卷积的嵌入层， 
-	\[{{T}_{2}}=MHA\{Flatten[Con{{v}_{proj}}({{T}_{1}})+{{d}_{i}}]\}\]
+	$${{T}_{2}}=MHA\{Flatten[Con{{v}_{proj}}({{T}_{1}})+{{d}_{i}}]\}$$
+
 $Con{{v}_{proj}}(\centerdot )$表示卷积投影层，$Flatten(\centerdot )$表示将二维数据展开的一维数据，$MHA(\centerdot )$表示多头注意力层
 
-\[x_{i+1}^t=\operatorname{Reshape}\left\{\operatorname{MLP}\left[\operatorname{Norm}\left(T_2\right)+d_i\right]\right\}\]
+$$x_{i+1}^t=\operatorname{Reshape}\left\{\operatorname{MLP}\left[\operatorname{Norm}\left(T_2\right)+d_i\right]\right\}$$
 
-$MLP(\centerdot )$表示多层感知机，$\operatorname{Re}shape(\centerdot )$表示将一维数据变成二维数据
+$MLP(\centerdot)$表示多层感知机，$\operatorname{Re}shape(\centerdot )$表示将一维数据变成二维数据
 
 （2）Convolution分支的表达式
 
-\[e_i=\left\{\begin{array}{l}x_0, i=0 \\ x_i^c, i=1,3,5 \\ x_i^c+x_i^{u t}, i=2,4\end{array}\right.\]
+$$e_i=\left\{\begin{array}{l}x_0, i=0 \\ x_i^c, i=1,3,5 \\ x_i^c+x_i^{u t}, i=2,4\end{array}\right.$$
 上式中，${{e}_{i}}$表示条状卷积第$i$层的输入($i=0,1,2,3,4$),${{x}_{0}}$表示输入的原始图像，$x_{i}^{c}$和$x_{i+1}^{c}$分别表示条状卷积分支的第$i$层和第$i+1$层的输出矩阵，$x_{i}^{ut}$表示Transformer分支的第$i$层经过双线性插值上采样成为相同大小的特征图。
 
-$C_1=\delta\left\{\operatorname{norm}\left[\operatorname{Conv}_{1 \times 3}\left(e_i\right)\right]\right\}$
+$$C_1=\delta\left\{\operatorname{norm}\left[\operatorname{Conv}_{1 \times 3}\left(e_i\right)\right]\right\}$$
 
-$C_2=\delta\left\{\operatorname{norm}\left[\operatorname{Conv}_{3 \times 1}\left(C_1\right)\right]\right\}$
+$$C_2=\delta\left\{\operatorname{norm}\left[\operatorname{Conv}_{3 \times 1}\left(C_1\right)\right]\right\}$$
 $\delta (\centerdot )$表示激活函数ReLU，$Con{{v}_{1\times 3}}$和$Con{{v}_{3\times 1}}$分别表示卷积核大小和条状卷积
-	\[{{C}_{3}}=Maxpooling({{C}_{2}})\]
+	$${{C}_{3}}=Maxpooling({{C}_{2}})$$
 $Maxpooling(\centerdot )$表示最大池化层
-	\[x_{i+1}^{c}={{C}_{2}}+{{C}_{3}}\]
+	$$x_{i+1}^{c}={{C}_{2}}+{{C}_{3}}$$
 
 （3）解码阶段
-\[{{D}_{i}}=Upsample\{\delta [DWConv({{M}_{I}})]\},i=1,2,3,4\]
+$${{D}_{i}}=Upsample\{\delta [DWConv({{M}_{I}})]\},i=1,2,3,4$$
 
-\[M_i=\left\{\begin{array}{l}\operatorname{Concat}\left(D_{i+1}, x_i^c\right), i=1,3 \\ \operatorname{Concat}\left(D_{i+1}, x_i^t\right), i=2 \\ \operatorname{Concat}\left(x_i^t, x_{i+1}^c\right), i=4\end{array}\right.\]
+$$M_i=\left\{\begin{array}{l}\operatorname{Concat}\left(D_{i+1}, x_i^c\right), i=1,3 \\ \operatorname{Concat}\left(D_{i+1}, x_i^t\right), i=2 \\ \operatorname{Concat}\left(x_i^t, x_{i+1}^c\right), i=4\end{array}\right.$$
 	上式中，$x_{i}^{t}$和$x_{i}^{c}$分别表示Transformer分支和卷积分支第i层的输出，${{D}_{i}}$表示解码器第i层的输出，$Upsample(\centerdot )$表示双线性插值上采样，$\delta (\centerdot )$表示记过函数GELU，DWConv表示深度可分离卷积，$Concat(\centerdot )$表示拼接操作。
 
 #### 3.4评价指标介绍
 本文的部分的评价指标如下，用于衡量构建的深度神经网络的性能。MPA( Mean Pixel Accuracy)也叫像素精度，是图像分割任务中常用的评价指标之一，其计算方法是将模型预测正确的像素数除以总像素数:
-\[\text{MPA}=\frac{1}{k}\sum\limits_{i=0}^{k}{\frac{{{p}_{i,i}}}{\sum\limits_{j=0}^{k}{{{p}_{i,j}}}}}\]
+$$\text{MPA}=\frac{1}{k}\sum\limits_{i=0}^{k}{\frac{{{p}_{i,i}}}{\sum\limits_{j=0}^{k}{{{p}_{i,j}}}}}$$
 其中，正确预测的像素数是指模型预测的像素标签与真实像素标签完全一致的像素数，总像素数是指图像中所有像素的数量。
 MIoU(Mean Intersection over Union),也叫平均交并比，是图像分割任务中常用的另一个评价指标，其计算方法是将每个类别的交并比取平均值
-\[\mathrm{MIoU}=\frac{1}{k+1} \sum_{i=0}^k \frac{p_{i, i}}{\sum_{j=0}^k p_{i, j}+\sum_{j=0}^k p_{j, i}-p_{i, i}}\]
+$$\mathrm{MIoU}=\frac{1}{k+1} \sum_{i=0}^k \frac{p_{i, i}}{\sum_{j=0}^k p_{i, j}+\sum_{j=0}^k p_{j, i}-p_{i, i}}$$
 其中，类别交集是指模型预测的像素标签与真实像素标签都为某个特定类别的像素数，类别并集是指模型预测的像素标签或真实像素标签为某个特定类别的像素数。MIoU的值越大，表示模型的分割结果越准确。
 
 #### 3.5一些结果
@@ -75,7 +81,7 @@ MIoU(Mean Intersection over Union),也叫平均交并比，是图像分割任务
 ![Alt text](result2.jpg)
 
 MIOU
-![Alt text](result3_MIOU.jpg)
+![Alt text](result3_MIOU-1.jpg)
 
 
 
